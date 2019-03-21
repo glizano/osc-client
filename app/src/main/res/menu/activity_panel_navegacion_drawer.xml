@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_menu"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Menu" />
+        <item
+            android:id="@+id/nav_pago"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Pago" />
+        <item
+            android:id="@+id/nav_slideshow"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="Administrar" />
+
+        <item
+            android:id="@+id/nav_compartir"
+            android:icon="@drawable/ic_menu_share"
+            android:title="Compartir" />
+
+    </group>
+
+    <item android:title="Cambiar imagenes">
+    </item>
+
+</menu>

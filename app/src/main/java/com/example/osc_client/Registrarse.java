@@ -80,7 +80,7 @@ public class Registrarse extends AppCompatActivity {
 
     public void updateUI(FirebaseUser user){
         if(user!=null){
-            Intent intent = new Intent(getApplicationContext(), Menu.class);
+            Intent intent = new Intent(getApplicationContext(), PanelNavegacion.class);
             startActivity(intent);
         }
 
