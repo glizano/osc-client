@@ -1,10 +1,13 @@
 package com.example.osc_client;
 
 import android.app.Fragment;
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -14,8 +17,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -27,11 +33,14 @@ import java.util.List;
 
 public class FragmentMenu extends Fragment {
 
-    ListView lvMenu;
-    List<Plato> platos;
-    List<Uri> urlImagenesPlatos;
+    private ListView lvMenu;
+    private List<Plato> platos;
+    private ArrayAdapter<Plato> adapter;
+    private List<String> ids;
 
     private StorageReference mStorageRef;
+    private DatabaseReference mDatabase;
+
 
     public FragmentMenu() {
         // Required empty public constructor
@@ -43,52 +52,68 @@ public class FragmentMenu extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_menu, container, false);
 
+        mStorageRef = FirebaseStorage.getInstance().getReference();
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
         lvMenu = view.findViewById(R.id.lvMenu);
         platos = new ArrayList<>();
-        urlImagenesPlatos = new ArrayList<>();
+        ids = new ArrayList<>();
+        adapter = new MyListAdapter();
+        lvMenu.setAdapter(adapter);
 
-        mStorageRef = FirebaseStorage.getInstance().getReference();
+        addChildEventListener();
 
-        auxLlenarPlatos();
-        LlenarListView();
         RegistrarClicks();
 
+        registerForContextMenu(lvMenu);
 
         return view;
     }
 
-    public void cargarImagen(View itemView, String ruta) {
-        final ImageView ivPlato = (ImageView) itemView.findViewById(R.id.ivPlato);
-        StorageReference imgRef = mStorageRef.child("uploads/" + ruta);
-        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+    private void addChildEventListener() {
+        mDatabase.child("platos").addChildEventListener(new ChildEventListener() {
             @Override
-            public void onSuccess(Uri uri) {
-                Picasso.get()
-                        .load(uri.toString())
-                        .error(R.drawable.ic_launcher_foreground)
-                        .into(ivPlato);
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Plato p = dataSnapshot.getValue(Plato.class);
+                p.setId(dataSnapshot.getKey());
+                ids.add(dataSnapshot.getKey());
+                adapter.add(p);
             }
-        })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                    }
-                });
 
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Plato p = dataSnapshot.getValue(Plato.class);
+                p.setId(dataSnapshot.getKey());
+                int index = ids.indexOf(dataSnapshot.getKey());
+                if (index != -1) {
+                    Plato pc = platos.get(index);
+                    platos.remove(pc);
+                    platos.add(index, p);
+                    adapter.notifyDataSetChanged();
+                }
 
-    }
+            }
 
-    public void auxLlenarPlatos() {
-        platos.add(new Plato(new Long(1), "Casado", "Esto es un casado....", "casado.png", new Double(1500)));
-        platos.add(new Plato(new Long(2), "Pollo frito", "Delicioso pollo frito...", "pollo.jpg", new Double(1000)));
-        platos.add(new Plato(new Long(3), "Mondongo", "Sopa de mondongo con mucho mondongo...", "sopa.jpg", new Double(750)));
-        platos.add(new Plato(new Long(4), "Plato 4", "Descripcion de plato 4", "", new Double(50)));
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                int index = ids.indexOf(dataSnapshot.getKey());
+                if (index != -1) {
+                    platos.remove(index);
+                    adapter.notifyDataSetChanged();
+                }
 
-    }
+            }
 
-    private void LlenarListView() {
-        ArrayAdapter<Plato> adapter = new MyListAdapter();
-        lvMenu.setAdapter(adapter);
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void RegistrarClicks() {
@@ -108,7 +133,44 @@ public class FragmentMenu extends Fragment {
         Toast.makeText(getActivity().getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
-    ;
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        Plato p = platos.get(info.position);
+        switch (item.getItemId()) {
+            case 1:
+                Intent intento = new Intent(getActivity(),
+                        AgregarProducto.class);
+                Bundle paquete = new Bundle();
+                paquete.putString("id", p.getId());
+                paquete.putString("img", p.getImg());
+                paquete.putString("titulo", p.getTitulo());
+                paquete.putString("descripcion", p.getDescripcion());
+                paquete.putLong("precio",p.getPrecio());
+                intento.putExtras(paquete);
+                startActivity(intento);
+                break;
+
+            case 2:
+                Mensaje("Funcion por realizar");
+                break;
+
+            default:
+                Mensaje("No clasificado");
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        menu.setHeaderTitle("Administrar Producto");
+        menu.add(0, 1, 0, "Editar");
+        menu.add(0, 2, 0, "Borrar");
+
+    }
+
 
     private class MyListAdapter extends ArrayAdapter<Plato> {
         public MyListAdapter() {
@@ -122,9 +184,15 @@ public class FragmentMenu extends Fragment {
             if (itemView == null) {
                 itemView = FragmentMenu.this.getActivity().getLayoutInflater().inflate(R.layout.plato, parent, false);
             }
+
             Plato platoActual = platos.get(position);
             // Fill the view
-            cargarImagen(itemView, platoActual.getRutaFoto());
+//            cargarImagen(itemView, platoActual.getImg());
+            ImageView ivPlato = itemView.findViewById(R.id.ivPlato);
+            Picasso.get()
+                    .load(platoActual.getImg())
+                    .error(R.drawable.ic_launcher_foreground)
+                    .into(ivPlato);
             TextView tvTitulo = itemView.findViewById(R.id.tvTituloPlato);
             tvTitulo.setText(platoActual.getTitulo());
             TextView tvDescripcion = itemView.findViewById(R.id.tvDescripcionPlato);

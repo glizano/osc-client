@@ -13,18 +13,19 @@
             android:icon="@drawable/ic_menu_gallery"
             android:title="Pago" />
         <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Administrar" />
-
-        <item
             android:id="@+id/nav_compartir"
             android:icon="@drawable/ic_menu_share"
             android:title="Compartir" />
 
+        <item
+            android:id="@+id/nav_agregar_producto"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="Agregar Producto" />
+
+
+
+
     </group>
 
-    <item android:title="Cambiar imagenes">
-    </item>
 
 </menu>

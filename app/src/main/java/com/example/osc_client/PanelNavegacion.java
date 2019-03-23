@@ -2,6 +2,7 @@ package com.example.osc_client;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -48,6 +49,7 @@ public class PanelNavegacion extends AppCompatActivity
         FragmentMenu fragmentMenu = new FragmentMenu();
         fragmentTransaction.replace(R.id.clPanelNavegacion, fragmentMenu, "fragmentMenu");
         fragmentTransaction.commit();
+        getSupportActionBar().setTitle("Menu");
 
 
     }
@@ -100,6 +102,10 @@ public class PanelNavegacion extends AppCompatActivity
         } else if (id == R.id.nav_pago) {
 
         } else if (id == R.id.nav_compartir) {
+
+        }else if(id == R.id.nav_agregar_producto){
+            Intent i = new Intent(getApplicationContext(), AgregarProducto.class);
+            startActivity(i);
 
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
